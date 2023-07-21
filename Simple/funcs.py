@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from astropy import units as u
 from astropy.units.quantity import Quantity as Q
-from scipy.integrate import odeint
+from scipy.integrate import odeint, solve_ivp
 
 
 def simple_pend_num(l, th0, vx0=0, vy0=0, dt=0.01, g=9.81, steps=1000):
@@ -28,22 +28,45 @@ def simple_pend_num(l, th0, vx0=0, vy0=0, dt=0.01, g=9.81, steps=1000):
     return np.array(xx), np.array(yy)
 
 
+##def simple_pend_anal(l, th0, thp0=0, dt=0.01, g=9.81, steps=5000):
+##    def model(y, t, l):
+##        th, thp = y
+##        thpp = -(g/l)*np.sin(th)
+##        return thp, thpp
+##
+##    t = np.linspace(0, steps*dt, steps)
+##
+##    y0 = [np.radians(th0), thp0]
+##    y = odeint(model, y0, t, args=(l,))
+##
+##    theta = y[:,0]
+##    xx = l * np.sin(theta)
+##    yy = l * np.cos(theta)
+##    return xx, yy
+
+
+
 def simple_pend_anal(l, th0, thp0=0, dt=0.01, g=9.81, steps=5000):
-    def model(y, t, l):
-        th, thp = y
-        thpp = -(g/l)*np.sin(th)
+    def fun(t, s):
+        th = s[0]
+        thp = s[1]
+        thpp = -(g/l)*np.sin(s[0])
         return thp, thpp
 
-    t = np.linspace(0, steps*dt, steps)
+    t = np.arange(0, 10.01, 0.01)
+    t_span = [t[0], t[-1]]
+    y0 = [th0, thp0] 
 
-    y0 = [np.radians(th0), thp0]
-    y = odeint(model, y0, t, args=(l,))
+    sol = solve_ivp(fun=fun,
+                    t_span=t_span,
+                    y0=y0,
+                    t_eval=t)
 
-    theta = y[:,0]
+    theta = sol.y[0]
+    #theta_p = sol.y[1]
     xx = l * np.sin(theta)
     yy = l * np.cos(theta)
     return xx, yy
-
 
 
 def animate(xx, yy, interval=20):
